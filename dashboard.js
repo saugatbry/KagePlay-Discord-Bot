@@ -2,6 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const bodyParser = require('body-parser');
 const path = require('path');
+const fs = require('fs');
 const { EmbedBuilder } = require('discord.js');
 
 module.exports = (client, getConfig, saveConfig) => {
@@ -93,6 +94,21 @@ module.exports = (client, getConfig, saveConfig) => {
         } catch (err) {
             res.render('announce', { config, success: `Error: ${err.message}` });
         }
+    });
+
+    app.get('/env', checkAuth, (req, res) => {
+        const envPath = path.join(__dirname, '.env');
+        let envContent = '';
+        if (fs.existsSync(envPath)) {
+            envContent = fs.readFileSync(envPath, 'utf8');
+        }
+        res.render('env', { envContent, success: false });
+    });
+
+    app.post('/env', checkAuth, (req, res) => {
+        const envPath = path.join(__dirname, '.env');
+        fs.writeFileSync(envPath, req.body.envContent || '');
+        res.render('env', { envContent: req.body.envContent, success: 'Environment variables saved successfully! Please restart the bot for changes to take effect.' });
     });
 
     app.listen(PORT, () => {
